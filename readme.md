@@ -60,8 +60,9 @@ devpi upload
 
 ## 构建与发布
 
+推送到 GitHub 会触发 `publish` workflow 自动构建并发布镜像：
+
 ```bash
-cd docker
-docker login ghcr.io
-./build.sh   # 构建并推送到 ghcr.io/jiangood/devpi:latest
+git tag v1.0.0
+git push origin v1.0.0
 ```
