@@ -53,43 +53,9 @@ pip config set global.trusted-host <主机>
 pip install <包名> -i http://<主机>:7104/root/pypi/+simple/ --trusted-host <主机>:7104
 ```
 
-## 添加额外镜像源
-
-如需缓存其他 PyPI 兼容源（如 PyTorch CUDA wheel），可手动创建镜像索引。进入容器执行：
-
-```bash
-docker exec -it <容器名> sh -c '
-  devpi use http://0.0.0.0:7104
-  devpi login root --password=""
-  devpi index -c root/cu130 type=mirror \
-    mirror_url=https://mirror.sjtu.edu.cn/pytorch-wheels/cu130 \
-    mirror_no_project_list=True \
-    mirror_web_url_fmt="https://mirror.sjtu.edu.cn/pytorch-wheels/cu130/{name}/"
-  devpi logout
-'
-```
-
-`-c` 表示创建；更新已有索引时去掉即可。
-
-**客户端 pip 配置**（同时使用主源和额外源）：
-
-```bash
-pip config set global.index-url http://<主机>:7104/root/pypi/+simple/
-pip config set global.extra-index-url http://<主机>:7104/root/cu130/+simple/
-pip config set global.trusted-host <主机>
-```
-
-验证索引是否就绪：
-
-```bash
-curl http://<主机>:7104/root/cu130/+simple/torch/
-```
-
-首次请求会触发按需拉取并缓存，之后直接命中本地。
-
 ## 添加额外索引
 
-如需缓存其他 PyPI 源（如 PyTorch CUDA wheel），可在目标机上手动创建镜像索引：
+需要缓存其他源（如 PyTorch CUDA wheel）时，在目标机手动创建镜像索引（以 cu130 为例）：
 
 ```bash
 docker exec -it <容器名> sh -c '
@@ -103,9 +69,7 @@ docker exec -it <容器名> sh -c '
 '
 ```
 
-`-c` 表示创建新索引；更新已有索引时去掉 `-c` 即可。访问方式：`http://<主机>:7104/root/cu130/+simple/`。
-
-**pip 同时使用多个索引**：`global.extra-index-url` 支持逗号分隔多个地址，或分别设置 `index-url` 和 `extra-index-url`：
+创建用 `-c`，更新已有索引时去掉。客户端配合多索引：
 
 ```bash
 pip config set global.index-url http://<主机>:7104/root/pypi/+simple/
@@ -113,7 +77,7 @@ pip config set global.extra-index-url http://<主机>:7104/root/cu130/+simple/
 pip config set global.trusted-host <主机>
 ```
 
-> pip 会同时查询所有索引，优先选择版本号更高的包（如 `+cu130` > CPU 版）。
+pip 会同时查询所有索引并优先取版本更高的包（如 `+cu130` > CPU 版）。
 
 ## 构建与发布
 
