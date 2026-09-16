@@ -30,7 +30,9 @@ services:
 
 ## 上游源
 
-上游镜像源已固定为上海交大 PyPI 源 `https://mirror.sjtu.edu.cn/pypi/web/simple`，不支持运行时通过环境变量切换；如需更换源头，请修改 `entrypoint.sh` 后重新构建镜像。
+上游镜像源固定为上海交大 PyPI 源 `https://mirror.sjtu.edu.cn/pypi/web/simple`，不支持运行时通过环境变量切换；如需更换源头，请修改 `entrypoint.sh` 后重新构建镜像。
+
+> 上海交大镜像为 S3 后端，根路径不提供标准 PEP 503 项目清单，因此索引需启用 `mirror_no_project_list=True`（devpi-server 6.9.0+），改为按需向镜像拉取单个项目页面。
 
 ## pip 使用
 
