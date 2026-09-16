@@ -34,7 +34,18 @@ services:
 
 ## pip 使用
 
-所有人匿名访问（`root/pypi` 即镜像缓存索引）：
+所有人匿名访问（`root/pypi` 即镜像缓存索引）。
+
+**全局配置（推荐）**：`pip config set` 会写入用户级配置文件（Linux/macOS 为 `~/.config/pip/pip.conf`，Windows 为 `%APPDATA%\pip\pip.ini`），一次配置永久生效，之后的 `pip install` 无需任何额外参数：
+
+```bash
+pip config set global.index-url http://<主机>:7104/root/pypi/+simple/
+pip config set global.trusted-host <主机>:7104
+```
+
+由于走 HTTP（非 HTTPS），必须配置 `trusted-host` 才能信任该源，否则 pip 会拒绝明文访问。
+
+**临时使用**：仅对当前这条命令生效，适合偶尔单次安装：
 
 ```bash
 pip install <包名> -i http://<主机>:7104/root/pypi/+simple/ --trusted-host <主机>:7104
