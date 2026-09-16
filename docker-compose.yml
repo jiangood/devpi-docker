@@ -6,3 +6,7 @@ services:
       - "7104:7104"
     volumes:
       - ./data:/var/lib/devpi
+    # 可选：更换上游源 / 调整请求超时（秒）
+    # environment:
+    #   MIRROR_URL: https://mirrors.aliyun.com/pypi/simple
+    #   REQUEST_TIMEOUT: "30"

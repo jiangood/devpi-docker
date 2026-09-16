@@ -3,7 +3,8 @@
 set -e
 
 SERVERDIR=/var/lib/devpi
-MIRROR_URL=https://mirror.sjtu.edu.cn/pypi/web/simple
+MIRROR_URL="${MIRROR_URL:-https://mirror.sjtu.edu.cn/pypi/web/simple}"
+REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-30}"
 
 if [ ! -f "${SERVERDIR}/.nodeinfo" ]; then
     echo "start initialization"
@@ -23,4 +24,5 @@ fi
     devpi logout
 ) &
 
-exec devpi-server --serverdir "${SERVERDIR}" --host=0.0.0.0 --port=7104 "$@"
+exec devpi-server --serverdir "${SERVERDIR}" --host=0.0.0.0 --port=7104 \
+    --request-timeout "${REQUEST_TIMEOUT}" "$@"

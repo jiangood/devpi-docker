@@ -16,6 +16,26 @@ docker run -d --name devpi \
 
 启动后访问 http://0.0.0.0:7104 即可打开 devpi 页面。
 
+## 配置
+
+| 环境变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `MIRROR_URL` | `https://mirror.sjtu.edu.cn/pypi/web/simple` | `root/pypi` 索引的上游源，容器每次启动时生效 |
+| `REQUEST_TIMEOUT` | `30` | devpi 请求上游源的超时秒数 |
+
+上游源访问慢或超时（日志出现 `ReadTimeout` / `UpstreamError`）时，可更换上游源或调大超时：
+
+```yaml
+services:
+  devpi:
+    ...
+    environment:
+      MIRROR_URL: https://mirrors.aliyun.com/pypi/simple
+      REQUEST_TIMEOUT: "30"
+```
+
+其他常用源：`https://pypi.org/simple`、`https://mirrors.tuna.tsinghua.edu.cn/pypi/simple`、`https://mirrors.aliyun.com/pypi/simple/`。
+
 ## pip 使用
 
 
