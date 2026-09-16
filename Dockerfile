@@ -5,8 +5,6 @@ RUN pip install --no-cache-dir \
     devpi-client==7.3.0
 VOLUME /var/lib/devpi
 EXPOSE 7104
-LABEL maintainer="jiangood"
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
-CMD []

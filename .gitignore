@@ -8,3 +8,4 @@ __pycache__
 dist
 modules.rst
 .DS_Store
+.idea
