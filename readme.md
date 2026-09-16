@@ -16,29 +16,10 @@ docker run -d --name devpi \
 
 启动后访问 http://0.0.0.0:7104 即可打开 devpi 页面。
 
-也可以用 docker compose：
-
-```yaml
-services:
-  devpi:
-    image: ghcr.io/jiangood/devpi:latest
-    ports:
-      - "7104:7104"
-    volumes:
-      - ./data:/var/lib/devpi
-```
-
-## 上游源
-
-上游镜像源固定为上海交大 PyPI 源 `https://mirror.sjtu.edu.cn/pypi/web/simple`，不支持运行时通过环境变量切换；如需更换源头，请修改 `entrypoint.sh` 后重新构建镜像。
-
-> 上海交大镜像为 S3 后端，根路径不提供标准 PEP 503 项目清单，因此索引需启用 `mirror_no_project_list=True`（devpi-server 6.9.0+），改为按需向镜像拉取单个项目页面。
-
 ## pip 使用
 
-所有人匿名访问（`root/pypi` 即镜像缓存索引）。
 
-**全局配置（推荐）**：`pip config set` 会写入用户级配置文件（Linux/macOS 为 `~/.config/pip/pip.conf`，Windows 为 `%APPDATA%\pip\pip.ini`），一次配置永久生效，之后的 `pip install` 无需任何额外参数：
+**全局配置（推荐）**：
 
 ```bash
 pip config set global.index-url http://<主机>:7104/root/pypi/+simple/
@@ -55,35 +36,27 @@ pip install <包名> -i http://<主机>:7104/root/pypi/+simple/ --trusted-host <
 
 ## 添加额外索引
 
-需要缓存其他源（如 PyTorch CUDA wheel）时，在目标机手动创建镜像索引（以 cu130 为例）：
+需要缓存其他源（如 PyTorch CUDA wheel）时，进入容器后依次执行（以 cu130 为例）：
 
 ```bash
-docker exec -it <容器名> sh -c '
-  devpi use http://0.0.0.0:7104
-  devpi login root --password=""
-  devpi index -c root/cu130 type=mirror \
-    mirror_url=https://mirror.sjtu.edu.cn/pytorch-wheels/cu130 \
-    mirror_no_project_list=True \
-    mirror_web_url_fmt="https://mirror.sjtu.edu.cn/pytorch-wheels/cu130/{name}/"
-  devpi logout
-'
+docker exec -it devpi sh
+```
+
+```bash
+devpi use http://0.0.0.0:7104
+devpi login root --password=""
+devpi index -c root/cu130 type=mirror \
+  mirror_url=https://mirror.sjtu.edu.cn/pytorch-wheels/cu130 \
+  mirror_no_project_list=True \
+  mirror_web_url_fmt="https://mirror.sjtu.edu.cn/pytorch-wheels/cu130/{name}/"
+devpi logout
 ```
 
 创建用 `-c`，更新已有索引时去掉。客户端配合多索引：
 
 ```bash
-pip config set global.index-url http://<主机>:7104/root/pypi/+simple/
 pip config set global.extra-index-url http://<主机>:7104/root/cu130/+simple/
-pip config set global.trusted-host <主机>
 ```
 
 pip 会同时查询所有索引并优先取版本更高的包（如 `+cu130` > CPU 版）。
 
-## 构建与发布
-
-推送到 GitHub 会触发 `publish` workflow 自动构建并发布镜像：
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```

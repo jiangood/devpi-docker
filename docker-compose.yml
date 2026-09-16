@@ -1,0 +1,8 @@
+services:
+  devpi:
+    image: ghcr.io/jiangood/devpi:latest
+    container_name: devpi
+    ports:
+      - "7104:7104"
+    volumes:
+      - ./data:/var/lib/devpi
