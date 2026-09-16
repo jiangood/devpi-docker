@@ -1,2 +1,3 @@
 set -e
-docker build -t lowinli98/devpi:v0.2 .
+docker build -t ghcr.io/jiangood/devpi:latest .
+docker push ghcr.io/jiangood/devpi:latest
