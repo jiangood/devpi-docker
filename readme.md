@@ -40,7 +40,7 @@ services:
 
 ```bash
 pip config set global.index-url http://<主机>:7104/root/pypi/+simple/
-pip config set global.trusted-host <主机>:7104
+pip config set global.trusted-host <主机>
 ```
 
 由于走 HTTP（非 HTTPS），必须配置 `trusted-host` 才能信任该源，否则 pip 会拒绝明文访问。
