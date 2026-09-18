@@ -20,7 +20,8 @@ docker run -d --name devpi \
 
 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `MIRROR_URL` | `https://mirror.sjtu.edu.cn/pypi/web/simple` | `root/pypi` 索引的上游源，容器每次启动时生效 |
+| `MIRROR_URL` | `https://pypi.tuna.tsinghua.edu.cn/simple` | `root/pypi` 索引的上游源，容器每次启动时生效 |
+| `NVIDIA_MIRROR_URL` | `https://pypi.nvidia.cn` | `root/nvidia` 索引的上游源（CUDA/NVIDIA 包），置空则不创建该索引 |
 | `REQUEST_TIMEOUT` | `30` | devpi 请求上游源的超时秒数 |
 | `ROOT_PASSWORD` | （空） | `root` 用户密码，仅在数据卷首次初始化时生效；设置后写操作需登录，读仍匿名 |
 
@@ -35,7 +36,7 @@ services:
       REQUEST_TIMEOUT: "30"
 ```
 
-其他常用源：`https://pypi.org/simple`、`https://mirrors.tuna.tsinghua.edu.cn/pypi/simple`、`https://mirrors.aliyun.com/pypi/simple/`。
+其他常用源：`https://pypi.org/simple`、`https://pypi.tuna.tsinghua.edu.cn/simple`、`https://mirrors.aliyun.com/pypi/simple/`。
 
 ## 鉴权与写操作
 
@@ -66,6 +67,50 @@ pip config set global.trusted-host <主机>
 pip install <包名> -i http://<主机>:7104/root/pypi/+simple/ --trusted-host <主机>:7104
 ```
 
+## requirements.txt 配置
+
+pip 会把 `requirements.txt` 中以 `--` 开头的行当作命令行参数，因此可以直接在文件里声明索引，无需全局配置。**基础用法**（只用主源）：
+
+```text
+--index-url http://<主机>:7104/root/pypi/+simple/
+--trusted-host <主机>
+
+requests
+numpy
+```
+
+**需要 CUDA/NVIDIA 包时**再加上 NVIDIA 索引：
+
+```text
+--index-url http://<主机>:7104/root/pypi/+simple/
+--extra-index-url http://<主机>:7104/root/nvidia/+simple/
+--trusted-host <主机>
+
+torch
+nvidia-cudnn-cu12
+tensorrt-cu12
+```
+
+然后正常执行：
+
+```bash
+pip install -r requirements.txt
+```
+
+注意：`--index-url`、`--extra-index-url`、`--trusted-host` 必须各自单独成行，不能和包名写在同一行。
+
+## NVIDIA / CUDA 源
+
+容器启动时会自动创建 `root/nvidia` 镜像索引，上游为 `https://pypi.nvidia.cn`，用于缓存 CUDA 相关包（如 `nvidia-cudnn-cu12`、`nvidia-cuda-runtime-cu12`、`tensorrt`、`cudf-cu12` 等）。该源只收录 NVIDIA 包，需与主源配合使用：
+
+```bash
+pip config set global.extra-index-url http://<主机>:7104/root/nvidia/+simple/
+```
+
+pip 会同时查询主源与该索引。如需禁用，将 `NVIDIA_MIRROR_URL` 置空即可。
+
+> 该索引的 `mirror_url` 是 `https://pypi.nvidia.cn`，**不要**加 `/simple` 后缀（NVIDIA 索引不含该路径，会 404）。
+
 ## 添加额外索引
 
 需要缓存其他源（如 PyTorch CUDA wheel）时，进入容器后依次执行（以 cu130 为例）：
@@ -79,7 +124,6 @@ devpi use http://0.0.0.0:7104
 devpi login root --password="${ROOT_PASSWORD:-}"
 devpi index -c root/cu130 type=mirror \
   mirror_url=https://mirror.sjtu.edu.cn/pytorch-wheels/cu130 \
-  mirror_no_project_list=True \
   mirror_web_url_fmt="https://mirror.sjtu.edu.cn/pytorch-wheels/cu130/{name}/"
 devpi logout
 ```
