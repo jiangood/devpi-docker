@@ -22,10 +22,12 @@ docker run -d --name devpi \
 | --- | --- | --- |
 | `MIRROR_URL` | `https://pypi.tuna.tsinghua.edu.cn/simple` | `root/pypi` 索引的上游源，容器每次启动时生效 |
 | `NVIDIA_MIRROR_URL` | `https://pypi.nvidia.cn` | `root/nvidia` 索引的上游源（CUDA/NVIDIA 包），置空则不创建该索引 |
-| `REQUEST_TIMEOUT` | `30` | devpi 请求上游源的超时秒数 |
+| `REQUEST_TIMEOUT` | `120` | devpi 请求上游源的超时秒数；必须大于拉取完整项目清单（清华源约 45 MB，实测约 1 分钟）的耗时 |
 | `ROOT_PASSWORD` | （空） | `root` 用户密码，仅在数据卷首次初始化时生效；设置后写操作需登录，读仍匿名 |
 
-上游源访问慢或超时（日志出现 `ReadTimeout` / `UpstreamError`）时，可更换上游源或调大超时：
+> `root/pypi` 未启用 `mirror_no_project_list`，devpi 需要先拉取上游的**完整项目清单**才能解析包名。若超时不够、清单拉取失败，日志会出现 `upstream error ... using stale projects list`，随后**所有包**都报 `The project ... does not exist.`。清华源的清单约 45 MB、实测约 1 分钟，因此 `REQUEST_TIMEOUT` 需调大（默认 120）。容器启动时会后台预取一次清单。
+
+上游源访问慢或超时（日志出现 `ReadTimeout` / `UpstreamError` / `using stale projects list`）时，可更换上游源或继续调大超时：
 
 ```yaml
 services:
@@ -33,10 +35,12 @@ services:
     ...
     environment:
       MIRROR_URL: https://mirrors.aliyun.com/pypi/simple
-      REQUEST_TIMEOUT: "30"
+      REQUEST_TIMEOUT: "180"
 ```
 
 其他常用源：`https://pypi.org/simple`、`https://pypi.tuna.tsinghua.edu.cn/simple`、`https://mirrors.aliyun.com/pypi/simple/`。
+
+> 注意：清华源地址是 `https://pypi.tuna.tsinghua.edu.cn/simple`，**不要**写成 `https://mirrors.tuna.tsinghua.edu.cn/pypi/simple`（该路径返回 404）；如需用 `mirrors.tuna` 主机，正确路径是 `https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/`。
 
 ## 鉴权与写操作
 

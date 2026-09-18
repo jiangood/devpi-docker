@@ -5,7 +5,7 @@ set -e
 SERVERDIR=/var/lib/devpi
 MIRROR_URL="${MIRROR_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 NVIDIA_MIRROR_URL="${NVIDIA_MIRROR_URL:-https://pypi.nvidia.cn}"
-REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-30}"
+REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-120}"
 ROOT_PASSWORD="${ROOT_PASSWORD:-}"
 
 if [ ! -f "${SERVERDIR}/.nodeinfo" ]; then
@@ -32,6 +32,7 @@ fi
 
     echo "set mirror for root/pypi"
     devpi index root/pypi mirror_url="${MIRROR_URL}" \
+        mirror_no_project_list=False \
         mirror_web_url_fmt="${MIRROR_URL}/{name}/"
 
     if [ -n "${NVIDIA_MIRROR_URL}" ]; then
@@ -46,6 +47,9 @@ fi
                 mirror_web_url_fmt="${NVIDIA_MIRROR_URL}/{name}/"
         fi
     fi
+
+    echo "prefetch root/pypi project list from upstream"
+    python -c "import urllib.request; urllib.request.urlopen('http://0.0.0.0:7104/root/pypi/+simple/', timeout=300).read()" || true
 
     devpi logout
 ) &

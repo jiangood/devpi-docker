@@ -10,5 +10,5 @@ services:
     # environment:
     #   MIRROR_URL: https://mirrors.aliyun.com/pypi/simple
     #   NVIDIA_MIRROR_URL: https://pypi.nvidia.cn
-    #   REQUEST_TIMEOUT: "30"
+    #   REQUEST_TIMEOUT: "120"
     #   ROOT_PASSWORD: change-me
